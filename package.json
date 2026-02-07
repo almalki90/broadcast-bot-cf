@@ -1,0 +1,21 @@
+{
+  "name": "broadcast-bot-cf",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev dist --ip 0.0.0.0 --port 3001 --kv=CHATS_KV",
+    "build": "vite build",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name broadcast-bot",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "clean-port": "fuser -k 3001/tcp 2>/dev/null || true"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250705.0",
+    "@hono/vite-cloudflare-pages": "^0.4.2",
+    "vite": "^5.0.0",
+    "wrangler": "^3.78.0"
+  }
+}
