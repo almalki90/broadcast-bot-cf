@@ -1,67 +1,41 @@
-// =====================================
-// 📰 Daily News Script for GitHub Actions
-// =====================================
-
+// Daily News Script
 const GROK_API_KEY = process.env.GROK_API_KEY
 const BOT_TOKEN = process.env.BROADCAST_BOT_TOKEN
 const ADMIN_ID = process.env.BROADCAST_ADMIN_ID
 
-// =====================================
-// 🤖 Grok API - جلب الأخبار
-// =====================================
 async function fetchDayerNews() {
   const url = 'https://api.x.ai/v1/chat/completions'
   
-  const messages = [
-    {
-      role: 'system',
-      content: `أنت محرر أخبار متخصص في محافظة الدائر بني مالك في منطقة جازان بالسعودية.
-
-مهمتك:
-1. البحث في الإنترنت عن آخر الأخبار الخاصة بمحافظة الدائر بني مالك فقط
-2. جمع الأخبار من آخر 24 ساعة
-3. كتابة تقرير احترافي بالعربية
-
-معايير الأخبار:
-- يجب أن تتعلق بمحافظة الدائر بني مالك تحديداً
-- أخبار محلية (مشاريع، فعاليات، إنجازات، أحداث)
-- مصادر موثوقة فقط
-
-التنسيق المطلوب:
-📰 **تقرير أخبار الدائر بني مالك اليومي**
-
-🗓️ التاريخ: [التاريخ]
-
-📋 **ملخص:**
-[ملخص في 2-3 أسطر]
-
----
-
-**الأخبار:**
-
-1️⃣ **[عنوان]**
-📍 المصدر: [المصدر]
-🔗 [رابط]
-📝 [التفاصيل]
-
----
-
-💡 إذا لم تجد أخبار جديدة، اذكر ذلك.`
-    },
-    {
-      role: 'user',
-      content: `ابحث عن آخر أخبار محافظة الدائر بني مالك.
+  const requestBody = {
+    messages: [
+      {
+        role: 'system',
+        content: 'أنت محرر أخبار متخصص في محافظة الدائر بني مالك. ابحث في الإنترنت عن آخر الأخبار واكتب تقرير احترافي بالعربية.'
+      },
+      {
+        role: 'user',
+        content: `ابحث عن آخر أخبار محافظة الدائر بني مالك في آخر 24 ساعة.
 
 الكلمات المفتاحية:
 - "الدائر بني مالك"
-- "محافظة الدائر"
 - "الداير بني مالك"
+- "محافظة الدائر"
 
 التاريخ: ${new Date().toLocaleDateString('ar-SA')}
 
-ملاحظة: ركز فقط على أخبار الدائر بني مالك.`
-    }
-  ]
+اكتب تقرير احترافي بالعربية مع:
+- العنوان الرئيسي
+- ملخص قصير
+- الأخبار مع المصادر
+- روابط المصادر
+
+إذا لم تجد أخبار جديدة، اذكر ذلك.`
+      }
+    ],
+    model: 'grok-beta',
+    stream: false,
+    temperature: 0
+  }
 
   const response = await fetch(url, {
     method: 'POST',
@@ -69,30 +43,25 @@ async function fetchDayerNews() {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${GROK_API_KEY}`
     },
-    body: JSON.stringify({
-      model: 'grok-beta',
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 2000
-    })
+    body: JSON.stringify(requestBody)
   })
 
+  const responseText = await response.text()
+  
   if (!response.ok) {
-    throw new Error(`Grok API error: ${response.status}`)
+    console.error('Grok API Response:', responseText)
+    throw new Error(`Grok API error: ${response.status} - ${responseText}`)
   }
 
-  const data = await response.json()
+  const data = JSON.parse(responseText)
   
   if (data.choices && data.choices[0] && data.choices[0].message) {
     return data.choices[0].message.content
   }
 
-  throw new Error('Invalid Grok response')
+  throw new Error('Invalid Grok response structure')
 }
 
-// =====================================
-// 📤 إرسال لـ Telegram
-// =====================================
 async function sendToTelegram(chatId, text) {
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`
   
@@ -101,50 +70,50 @@ async function sendToTelegram(chatId, text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      text: text,
-      parse_mode: 'Markdown'
+      text: text
     })
   })
 
   return await response.json()
 }
 
-// =====================================
-// 🔄 Main
-// =====================================
 async function main() {
   console.log('⏰ بدء GitHub Action - جلب أخبار الدائر بني مالك')
   
   try {
-    // جلب الأخبار من Grok
     console.log('🔍 جلب الأخبار من Grok AI...')
     const newsReport = await fetchDayerNews()
     
     console.log('✅ تم الحصول على التقرير')
-    console.log('📰 التقرير:', newsReport.substring(0, 200) + '...')
+    console.log('📰 طول التقرير:', newsReport.length, 'حرف')
     
-    // إرسال للأدمن
     console.log('📤 إرسال للأدمن...')
-    await sendToTelegram(ADMIN_ID, newsReport)
+    const result = await sendToTelegram(ADMIN_ID, newsReport)
     
-    console.log('✅ تم الإرسال بنجاح!')
-    
-    // إرسال تقرير النجاح
-    await sendToTelegram(ADMIN_ID, 
-      `✅ تم إرسال تقرير الأخبار اليومي\n\n` +
-      `⏰ الوقت: ${new Date().toLocaleString('ar-SA')}\n` +
-      `🤖 عبر GitHub Actions`
-    )
+    if (result.ok) {
+      console.log('✅ تم الإرسال بنجاح!')
+      
+      await sendToTelegram(ADMIN_ID, 
+        `✅ تم إرسال تقرير الأخبار اليومي\n\n` +
+        `⏰ الوقت: ${new Date().toLocaleString('ar-SA')}\n` +
+        `🤖 عبر GitHub Actions`
+      )
+    } else {
+      throw new Error(`Telegram error: ${JSON.stringify(result)}`)
+    }
     
   } catch (error) {
-    console.error('❌ خطأ:', error)
+    console.error('❌ خطأ:', error.message)
     
-    // إرسال تقرير الفشل
-    await sendToTelegram(ADMIN_ID, 
-      `❌ فشل GitHub Action\n\n` +
-      `الخطأ: ${error.message}\n` +
-      `⏰ الوقت: ${new Date().toLocaleString('ar-SA')}`
-    )
+    try {
+      await sendToTelegram(ADMIN_ID, 
+        `❌ فشل GitHub Action\n\n` +
+        `الخطأ: ${error.message}\n` +
+        `⏰ الوقت: ${new Date().toLocaleString('ar-SA')}`
+      )
+    } catch (e) {
+      console.error('فشل إرسال تقرير الخطأ:', e)
+    }
     
     process.exit(1)
   }
