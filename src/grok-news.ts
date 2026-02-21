@@ -69,7 +69,7 @@ export async function fetchDayerNews(grokApiKey: string): Promise<string> {
   ]
 
   const requestBody = {
-    model: 'grok-beta',
+    model: 'grok-2-1212',
     messages: messages,
     temperature: 0.7,
     max_tokens: 2000
