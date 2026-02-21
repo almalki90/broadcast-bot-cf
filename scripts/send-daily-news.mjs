@@ -4,7 +4,7 @@ const BOT_TOKEN = process.env.BROADCAST_BOT_TOKEN
 const ADMIN_ID = process.env.BROADCAST_ADMIN_ID
 
 async function fetchDayerNews() {
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`
   
   const requestBody = {
     contents: [{
