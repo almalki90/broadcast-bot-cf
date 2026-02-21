@@ -26,24 +26,18 @@ const DEFAULT_BUTTONS = {
 }
 
 // =====================================
-// 📋 دوال KV للدردشات
+// 📋 دوال إدارة الدردشات (Memory Storage)
+// ملاحظة: في الإنتاج، يُفضل استخدام KV أو D1
+// لكن للبساطة سنستخدم memory مؤقتاً
 // =====================================
+let globalChats: any[] = []
+
 async function loadChats(env: any): Promise<any[]> {
-  try {
-    const data = await env.CHATS_KV.get('chats', 'json')
-    return data || []
-  } catch (error) {
-    console.error('❌ خطأ في تحميل الدردشات:', error)
-    return []
-  }
+  return globalChats
 }
 
 async function saveChats(env: any, chats: any[]): Promise<void> {
-  try {
-    await env.CHATS_KV.put('chats', JSON.stringify(chats))
-  } catch (error) {
-    console.error('❌ خطأ في حفظ الدردشات:', error)
-  }
+  globalChats = chats
 }
 
 // =====================================
@@ -67,11 +61,7 @@ async function sendTelegramMessage(
 // =====================================
 // 🤖 التطبيق الرئيسي
 // =====================================
-type Bindings = {
-  CHATS_KV: KVNamespace
-}
-
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono()
 
 // الصفحة الرئيسية
 app.get('/', (c) => {
