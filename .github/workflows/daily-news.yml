@@ -1,4 +1,4 @@
-name: Daily News Report - Grok AI
+name: Daily News Report - Google Gemini AI
 
 on:
   schedule:
@@ -28,5 +28,5 @@ jobs:
         env:
           BROADCAST_BOT_TOKEN: ${{ secrets.BROADCAST_BOT_TOKEN }}
           BROADCAST_ADMIN_ID: ${{ secrets.BROADCAST_ADMIN_ID }}
-          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node scripts/send-daily-news.mjs

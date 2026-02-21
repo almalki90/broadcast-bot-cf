@@ -1,47 +1,45 @@
-// Daily News Script
-const GROK_API_KEY = process.env.GROK_API_KEY
+// Daily News Script - Powered by Google Gemini AI
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 const BOT_TOKEN = process.env.BROADCAST_BOT_TOKEN
 const ADMIN_ID = process.env.BROADCAST_ADMIN_ID
 
 async function fetchDayerNews() {
-  const url = 'https://api.x.ai/v1/chat/completions'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`
   
   const requestBody = {
-    messages: [
-      {
-        role: 'system',
-        content: 'أنت محرر أخبار متخصص في محافظة الدائر بني مالك. ابحث في الإنترنت عن آخر الأخبار واكتب تقرير احترافي بالعربية.'
-      },
-      {
-        role: 'user',
-        content: `ابحث عن آخر أخبار محافظة الدائر بني مالك في آخر 24 ساعة.
+    contents: [{
+      parts: [{
+        text: `أنت محرر أخبار محترف مختص بأخبار محافظة الدائر بني مالك في السعودية.
+ابحث في الإنترنت عن آخر الأخبار والأحداث في محافظة الدائر بني مالك خلال الـ24 ساعة الماضية.
 
 الكلمات المفتاحية:
 - "الدائر بني مالك"
 - "الداير بني مالك"
 - "محافظة الدائر"
+- "#الدائر"
+- "#الداير"
 
 التاريخ: ${new Date().toLocaleDateString('ar-SA')}
 
-اكتب تقرير احترافي بالعربية مع:
-- العنوان الرئيسي
-- ملخص قصير
-- الأخبار مع المصادر
-- روابط المصادر
+قدم تقرير إخباري احترافي بالعربية يحتوي على:
+📰 عنوان رئيسي جذاب
+📝 ملخص للأخبار المهمة (3-5 أخبار على الأقل)
+🔗 روابط المصادر إن وجدت
+✨ تنسيق جميل ومنظم بإيموجي
 
-إذا لم تجد أخبار جديدة، اذكر ذلك.`
-      }
-    ],
-    model: 'grok-3',
-    stream: false,
-    temperature: 0
+إذا لم تجد أخبار جديدة، اكتب تقرير عن الطقس أو معلومات عامة عن المحافظة.`
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048
+    }
   }
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROK_API_KEY}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(requestBody)
   })
@@ -49,17 +47,17 @@ async function fetchDayerNews() {
   const responseText = await response.text()
   
   if (!response.ok) {
-    console.error('Grok API Response:', responseText)
-    throw new Error(`Grok API error: ${response.status} - ${responseText}`)
+    console.error('Gemini API Response:', responseText)
+    throw new Error(`Gemini API error: ${response.status} - ${responseText}`)
   }
 
   const data = JSON.parse(responseText)
   
-  if (data.choices && data.choices[0] && data.choices[0].message) {
-    return data.choices[0].message.content
+  if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+    return data.candidates[0].content.parts[0].text
   }
 
-  throw new Error('Invalid Grok response structure')
+  throw new Error('Invalid Gemini response structure')
 }
 
 async function sendToTelegram(chatId, text) {
@@ -70,7 +68,8 @@ async function sendToTelegram(chatId, text) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      text: text
+      text: text,
+      parse_mode: 'HTML'
     })
   })
 
@@ -81,7 +80,7 @@ async function main() {
   console.log('⏰ بدء GitHub Action - جلب أخبار الدائر بني مالك')
   
   try {
-    console.log('🔍 جلب الأخبار من Grok AI...')
+    console.log('🔍 جلب الأخبار من Google Gemini AI...')
     const newsReport = await fetchDayerNews()
     
     console.log('✅ تم الحصول على التقرير')
@@ -96,7 +95,7 @@ async function main() {
       await sendToTelegram(ADMIN_ID, 
         `✅ تم إرسال تقرير الأخبار اليومي\n\n` +
         `⏰ الوقت: ${new Date().toLocaleString('ar-SA')}\n` +
-        `🤖 عبر GitHub Actions`
+        `🤖 عبر GitHub Actions + Google Gemini AI`
       )
     } else {
       throw new Error(`Telegram error: ${JSON.stringify(result)}`)
