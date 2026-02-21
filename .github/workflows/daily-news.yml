@@ -1,0 +1,32 @@
+name: Daily News Report - Grok AI
+
+on:
+  schedule:
+    # كل يوم الساعة 5:00 UTC = 8:00 صباحاً بتوقيت الرياض
+    - cron: '0 5 * * *'
+  
+  # يمكن تشغيله يدوياً أيضاً
+  workflow_dispatch:
+
+jobs:
+  send-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run news report script
+        env:
+          BROADCAST_BOT_TOKEN: ${{ secrets.BROADCAST_BOT_TOKEN }}
+          BROADCAST_ADMIN_ID: ${{ secrets.BROADCAST_ADMIN_ID }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: node scripts/send-daily-news.mjs
