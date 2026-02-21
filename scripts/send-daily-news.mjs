@@ -32,7 +32,7 @@ async function fetchDayerNews() {
 إذا لم تجد أخبار جديدة، اذكر ذلك.`
       }
     ],
-    model: 'grok-2-latest',
+    model: 'grok-3',
     stream: false,
     temperature: 0
   }
