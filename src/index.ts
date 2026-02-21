@@ -35,7 +35,7 @@ async function sendTelegramMessage(token: string, method: string, params: any): 
 }
 
 async function fetchGeminiNews(geminiKey: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiKey}`
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiKey}`
   
   const prompt = `أنت محرر أخبار متخصص في محافظة الدائر بني مالك في منطقة جازان بالسعودية.
 
